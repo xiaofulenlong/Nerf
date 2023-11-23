@@ -22,21 +22,28 @@ def main(args):
     """
     加载数据，每个数据集上需要得到的数据：
       imgs : 根据 .json 文件加载到的所有图像数据。  
-      poses : 转置矩阵,表示姿势。 
+      view_poses : 转置矩阵,表示姿势。 
       height,width,focal: 图像的高、宽、焦距。
     """
     transform_function = transforms.Compose(
         ResizeImg(img_scale),
         transforms.ToTensor(),
     )
-
+    #加载处理训练集和数据集
     train_dataset = BlenderDataSet(f"../{dataset_dir}/",'train',transform_function)
-
+    test_dataset =  BlenderDataSet(f"../{dataset_dir}/",'test',transform_function)
+    
+    #训练集的参数
+    train_focal = train_dataset.focal #焦距
+    train_view_pos = train_dataset.view_pos #相机姿势
+    train_img_h = train_dataset.img_H
+    train_img_w = train_dataset.img_w
+    train_img = train_dataset.img_dataset #图像信息
 
     # =========  nerf ============== 
     
     #调用nerf，初始化模型 
-    nerf_trained_args = create_nerf()
+    nerf_trained_args = create_nerf(args)
     
     #生成了所有图片的像素点对应的光线原点和方向，并将光线对应的像素颜色与光线聚合到了一起构成 rays_rgb
     ray = get_rays()
@@ -56,6 +63,8 @@ def main(args):
     psnr = 
 
     # ======== optimizer and schedule ===========
+    #创建优化器
+    optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
     loss.backward()  # 损失反向传播
     optimizer.step()
 
@@ -65,8 +74,8 @@ def main(args):
  
 
 
-if __name__ == "__main__":
-#创建解析器，读取命令行参数
-    parser = get_parser()
-    args = parser.parse_args()
-    main(args)
+# if __name__ == "__main__":
+# #创建解析器，读取命令行参数
+#     parser = get_parser()
+#     args = parser.parse_args()
+#     main(args)
