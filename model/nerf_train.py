@@ -45,25 +45,36 @@ def create_nerf(args):
     
     #需要的返回值
     # 现在整体的初始化已经完成，我们需要对返回值进行一些处理
-    nerf_trained_args = {
-        'network_query_fn' : 
-        'N_coarse' :  #粗采样的数量
-        'network_coarse' :  #粗网络
-        'N_fine' :     #细采样的数量
-        'network_fine' :    #细网络
-        'white_bkgd' :  
-        'raw_noise_std' : #归一化密度 ,
+    nerf_trained_args = { 
+        'mlp_query_fn' : mlp_query_fn,
+        'mlp_network_fn':mlp_model 
+        # 'N_coarse' :  
+        # 'network_coarse' :  #粗网络
+        # 'N_fine' :     #细采样的数量
+        # 'network_fine' :    #细网络
+        # 'white_bkgd' :  
+        # 'raw_noise_std' : #归一化密度 ,
     }
 
-    return grad_vars
+    return grad_vars,nerf_trained_args
+
+
 
 """
-
+    
+    以批处理的形式输入到网络模型中得到输出(RGB,A)
+    input:
+        position_inputs:(x,y,z)position输入: tensor
+        view_inputs: view输入:tensor
+        mlp_network_fn: 网络model
+        netchunkNum: 并行处理的输入数量
+    output:[rgb, density]
 
 """
-def run_nerf():
-    # 将编码过的点以批处理的形式输入到 网络模型 中得到 输出（RGB,A）
+def run_nerf(position_inputs,view_inputs,mlp_network_fn,netchunkNum):
+    
 
-    output = []
+    outputs = torch.cat([mlp_network_fn(position_inputs[i:i+netchunkNum],view_inputs[i:i+netchunkNum]) 
+                        for i in range(0, position_inputs.shape[0], netchunkNum)], -1)
 
-    return output
+    return outputs

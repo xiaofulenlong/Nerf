@@ -21,8 +21,8 @@ class BlenderDataSet(data.Dataset):
         transform:变换函数
     output:
         focal:焦距
-        img_dataset:全部的Image信息【已经经过transform变换】
-        view_pos:相机姿势
+        img_dataset:全部的Image信息【已经经过transform变换】:tensor
+        view_pos:相机姿势:tensor
         img_H:图像的高 
         img_w:图像的宽
         rotation:相机旋转角(?目前不知道有什么用)
