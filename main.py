@@ -1,4 +1,4 @@
- 
+
 from torchvision import transforms
 from utils.public_tools import get_parser
 from dataset.load_data import BlenderDataSet,ResizeImg
@@ -6,16 +6,16 @@ from model.nerf_train import create_nerf
 from rendering.rays import get_rays
 from rendering.render_rays import render
 import numpy as np  
+import torch
 
 def main(args):
 
     #========= 传参 ==============
-    #数据集地址
-    dataset_dir       = args.dataset_dir  
-
-    #图像比例：取值应为float,[0,1]
-    img_scale         = args.img_scale
-
+    
+    dataset_dir       = args.dataset_dir #数据集地址
+    img_scale         = args.img_scale #图像比例：取值应为float,[0,1]
+    if_use_batchs     = args.if_use_batchs #是否批处理，默认值为false
+    render_chunk      = args.render_chunk
 
     # ========= load dataset ==============  
        
@@ -43,9 +43,17 @@ def main(args):
     # =========  nerf ============== 
     
     #调用nerf，初始化模型 
-    nerf_trained_args = create_nerf(args)
+    grad_vars,nerf_trained_args = create_nerf(args)
     
-    #生成所有图片的像素点对应的光线原点和方向，并将光线对应的像素颜色与光线聚合到了一起构成 rays_rgb
+
+    # =========  create rays ============== 
+    #生成所有图片的像素点对应的光线原点和方向
+    #相机内参：
+    K = np.array([
+            [train_focal, 0, 0.5*train_img_w],
+            [0, train_focal, 0.5*train_img_h],
+            [0, 0, 1]
+        ])
     """
     train_view_pos 的形状应该为 (num_of_poses, 3, 4),其中 num_of_poses 是相机姿势的数量。
     pos: 每个相机姿势是一个 3x4 的矩阵，其中包含旋转矩阵和平移向量[x,y,z,o]。
@@ -53,18 +61,27 @@ def main(args):
     堆叠起来output: rays:(num_of_poses, 2, H, W, 3)
         其中 2 表示每个射线由原点和方向两个部分组成, 3 表示射线方向的三个分量x,y,z。
     """
-    rays = np.stack([get_rays(train_img_h,train_img_w,pos,train_focal) for pos in train_view_pos[:,:3,4]],0) 
+    rays = np.stack([get_rays(train_img_h,train_img_w,pos,K) for pos in train_view_pos[:,:3,4]],0) 
     
-    #由得到的光线得到： 生成所有图片的光线
-    if batchs:#开始迭代训练：以批处理的形式对进行训练
+    #随机选择1张或多张图片并做预处理
+    N_iters = 
+    if if_use_batchs:#开始迭代训练：以批处理的形式对进行训练
       for i in trange(start, N_iters):
-    
+        rays_selected_to_train = rays
     else: # 从所有的图像中随机选择一张图像用于训练
+      img_choose = np.random.choice()
 
-    #以上步骤将生成的光线和对应的像素点颜色分离，得到:batch_rays, target_colors
+
 
     # ========= rendering =============
-    rgb, disp, acc, extras = render(并行处理的光线的数量,  batch_rays, **nerf_trained_args)
+    """
+    Input:
+      render_chunk:并行处理光线的数目
+
+
+    
+    """
+    rgb, disp, acc, extras = render(render_chunk,  rays_selected_to_train, **nerf_trained_args)
 
     # ========= loss function =============
     loss = 

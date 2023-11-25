@@ -17,5 +17,10 @@ def get_parser():
     parser.add_argument('--output_dim',type=int,default=128,help="the output dim of mlp network")
     parser.add_argument('--netchunkNum',type=int,default=1024*64,help="number of sent through network in parallel")
 
-
+    #render options
+    parser.add_argument('--if_use_batchs',action='store_true', 
+                        help='whether only take random rays from 1 image at a time or n images')
+    parser.add_argument("--render_chunk", type=int, default=1024*32, 
+                        help='number of rays processed in parallel')
+    
     return parser
