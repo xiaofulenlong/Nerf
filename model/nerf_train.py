@@ -40,8 +40,11 @@ def create_nerf(args):
         mlp_network_fn: 网络model
         netchunkNum: 并行处理的输入数量
     """
-    mlp_query_fn = lambda position_inputs,view_inputs,mlp_network_fn: run_nerf(position_inputs,view_inputs,mlp_network_fn,netchunkNum )
+    mlp_query_fn = lambda position_inputs,view_inputs,mlp_network_fn: run_nerf(position_inputs,view_inputs,
+                                                                               mlp_network_fn,
+                                                                               netchunkNum = args.netchunkNum )
 
+    #加载模型和优化器的检查点
     
     #需要的返回值
     # 现在整体的初始化已经完成，我们需要对返回值进行一些处理
@@ -71,7 +74,7 @@ def create_nerf(args):
     output:[rgb, density]
 
 """
-def run_nerf(position_inputs,view_inputs,mlp_network_fn,netchunkNum):
+def run_nerf(position_inputs,view_inputs,mlp_network_fn,netchunkNum=1024*64 ):
     
 
     outputs = torch.cat([mlp_network_fn(position_inputs[i:i+netchunkNum],view_inputs[i:i+netchunkNum]) 

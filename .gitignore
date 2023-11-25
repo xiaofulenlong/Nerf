@@ -1,0 +1,175 @@
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# vim swp
+*.swp
+*.swo
+*.swn
+*.swm
+*.swl
+*.swk
+*.swj
+*.swi
+
+# vim YouCompleteMe plugin configs.
+# See https://github.com/ycm-core/YouCompleteMe
+.ycm_extra_conf.py
+
+#
+compile_commands.json
+
+#cscops files
+cscope.*
+
+# Python temporary files
+*.pyc
+**/__pycache__
+
+# vscode
+.vscode
+.vscode-server
+
+# *.prof
+*.prof
+cachegrind.*
+
+# Maps (separate repo, not a submodule)
+qcraft-maps-china
+qcraft-maps
+
+# Mac specific files
+.DS_Store
+
+# angular
+node_modules
+
+# idea
+.idea
+.ijwb
+*.project
+*.history
+*.iml
+
+# Java related temporary files (including Maven & Gradle)
+*.classpath
+*.settings
+.gradle
+.jpb
+dependency-reduced-pom.xml
+build
+target
+generated
+out
+classes
+
+# Temporary files
+tmp
+temp
+
+# Java web service local log files
+*.log
+*.log.gz
+*.bak
+log
+logs
+
+/data/
+offboard/vis/vantage/config/preference.pb.txt
+offboard/onb_sim/sensor_data_sim/data/
+release_output
+docker/dev/patch.*.dockerfile
+docker/dev/custom_deps.txt
+onboard/maps/ehr/navinfo/aom/data/drivingspace_sdk/
+onboard/maps/ehr/navinfo/aom/data/forestspace_sdk/
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Exclude all .tfvars files, which are likely to contain sentitive data, such as
+# password, private keys, and other secrets. These should not be part of version
+# control as they are data points which are potentially sensitive and subject
+# to change depending on the environment.
+#
+*.tfvars
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include override files you do wish to add to version control using negated pattern
+#
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+# example: *tfplan*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Marge Bot secrets
+third_party/marge-bot/marge-bot-ssh-key
+third_party/marge-bot/marge-bot.token
+
+# Generated either by "scripts/bazel_compdb.sh -s"
+# or by "ln -s bazel-out/../../../external external"
+/external
+/what_works.sh
+
+# Override *.so
+!third_party/libsyncu/syncu/libsyncu.so
+
+scripts/hil/v2/perf_rt_config_point.txt
+
+# Cfg
+.dsecfg.ini
+
+# cross compile: drive_orin
+drive_orin/aarch64
+drive_orin/output
+drive_orin/aarch64_orin.tar.xz
+drive_orin/download
+drive_orin/upload
+drive_orin/user.bazelrc
+
+# cross compile: j5
+onboard/j5/aarch64*
+onboard/j5/output
+onboard/j5/*.tar.gz
+onboard/j5/user.bazelrc
+onboard/j5/upload
+onboard/tugboat/dist
+onboard/x9hp
+qbuild/tmp
+qbuild/result
+genhtml
+
+# ctags
+tags
+
+# clion workspace file
+.clwb
+
+# service config
+*config.yaml
+
+# car data
+car_data
+
+# dbeaver config
+.dbeaver
