@@ -81,7 +81,7 @@ def main(args):
 
     
     """
-    rgb, disp, acc, extras = render(render_chunk,  rays_selected_to_train, **nerf_trained_args)
+    rgb_map = render(render_chunk,  rays_selected_to_train, **nerf_trained_args)
 
     # ========= loss function =============
     loss = 
@@ -94,7 +94,7 @@ def main(args):
     optimizer.step()
 
     #更新学习率
-    decay_rate = 
+    decay_rate = 0.1
 
  
 

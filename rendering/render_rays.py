@@ -40,10 +40,10 @@ def render(img_H,img_W,K,c2w,render_chunk,
     # 视图方向聚合到光线中
     rays = torch.cat([rays_o, rays_d, near, far,rays_d_normalized], -1) #拼接：变成[W*H,3+3+1+1+3]维度
     
-    # 开始并行计算光线属性
-    all_color_density = render_ray(rays,render_chunk,**nerf_trained_args)
+    # 开始并行计算光线属性,返回值：rgb_map:[number_of_rays, 3]
+    all_color_density = render_rays(rays,render_chunk,**nerf_trained_args)
 
-    return
+    return all_color_density
 
 
 
@@ -59,7 +59,7 @@ Args:
       rgb: 光线的RGB [ray_nums,3]
       density:光线的密度 [ray_nums,1]
 """
-def render_ray(rays,render_chunk,coarse_num,mlp_query_fn,mlp_network_fn):
+def render_rays(rays,render_chunk,coarse_num,mlp_query_fn,mlp_network_fn):
     
     # 从 ray 中分离出 rays_o, rays_d, viewdirs, near, far
     number_of_rays = rays.shape[0]
@@ -81,6 +81,6 @@ def render_ray(rays,render_chunk,coarse_num,mlp_query_fn,mlp_network_fn):
     raw = mlp_query_fn(sampled_points,rays_view,mlp_network_fn)
 
     # 对这些离散点进行体积渲染，即进行积分操作
-    rgb_map, disp_map, acc_map, weights, depth_map = intregrateTo_RGB_density(raw, z_vals, rays_d, )
+    rgb_map = intregrateTo_RGB_density(raw, z_vals, rays_d )
 
-    return 
+    return rgb_map
