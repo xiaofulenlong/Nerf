@@ -4,7 +4,7 @@ def get_parser():
     parser = argparse.ArgumentParser() 
 
     # dataset optionss
-    parser.add_argument('--dataset_dir',type=str,default='./data/nerf_synthetic/lego',help="dataset dir")
+    parser.add_argument('--dataset_dir',type=str,default='/nerf_synthetic/lego',help="dataset json dir")
     parser.add_argument('--dataset_type',type=str,default='blender', help='options: blender / llff')
     parser.add_argument("--img_scale", type = float, default = 0.5, help = "Scale of the image")
 
@@ -22,5 +22,10 @@ def get_parser():
                         help='whether only take random rays from 1 image at a time or n images')
     parser.add_argument("--render_chunk", type=int, default=1024*32, 
                         help='number of rays processed in parallel')
-    
+    parser.add_argument("--N_rand", type=int, default=32*32*4, 
+                        help='batch size (number of random rays per gradient step)')    
+
+    #train options
+    parser.add_argument("--lrate_decay", type=int, default=250, 
+                        help='exponential learning rate decay (in 1000 steps)')
     return parser

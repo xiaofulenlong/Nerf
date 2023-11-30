@@ -8,69 +8,43 @@ from model.nerf_model import Nerf
 def create_nerf(args):
      #初始化mlp
     """
-    input:
-        fre_position_L, #对位置坐标的映射维度
-        fre_view_L, #对视角的映射维度
-        network_depth = 8,
-        hidden_unit_num = 256,
-        output_features_dim = 256, #输出的特征值的维度
-        output_dim = 128 #拼接层的输出
-
     output:
-
+         grad_vars, #模型的梯度变量
+         nerf_trained_args #字典,返回模型与mlp函数
     """
-    fre_position_L      = args.fre_position_L
-    fre_view_L          = args.fre_view_L
-    network_depth       = args.network_depth
-    hidden_unit_num     = args.hidden_unit_num
-    output_features_dim = args.output_features_dim
-    output_dim          = args.output_dim
-    netchunkNum         = args.netchunkNum
-
+    fre_position_L      = args.fre_position_L #对位置坐标的映射维度
+    fre_view_L          = args.fre_view_L #对视角的映射维度
+    network_depth       = args.network_depth #8
+    hidden_unit_num     = args.hidden_unit_num #256
+    output_features_dim = args.output_features_dim #256
+    output_dim          = args.output_dim #128
+ 
     mlp_model = Nerf(fre_position_L,fre_view_L,network_depth,hidden_unit_num,output_features_dim,output_dim)
 
     #模型的梯度变量
     grad_vars = list(mlp_model.parameters())
 
-    """
     #作用：运行网络生成给定点的颜色和密度
-    input:
-        position_inputs:(x,y,z)position输入
-        view_inputs: view输入
-        mlp_network_fn: 网络model
-        netchunkNum: 并行处理的输入数量
-    """
     mlp_query_fn = lambda position_inputs,view_inputs,mlp_network_fn: run_nerf(position_inputs,view_inputs,
                                                                                mlp_network_fn,
                                                                                netchunkNum = args.netchunkNum )
-
-    #加载模型和优化器的检查点
-    
+     
     #需要的返回值
-    # 现在整体的初始化已经完成，我们需要对返回值进行一些处理
     nerf_trained_args = { 
         'mlp_query_fn' : mlp_query_fn,
         'mlp_network_fn':mlp_model 
-        # 'N_coarse' :  
-        # 'network_coarse' :  #粗网络
-        # 'N_fine' :     #细采样的数量
-        # 'network_fine' :    #细网络
-        # 'white_bkgd' :  
-        # 'raw_noise_std' : #归一化密度 ,
     }
 
     return grad_vars,nerf_trained_args
 
 
-
 """
-    
     以批处理的形式输入到网络模型中得到输出(RGB,A)
     input:
         position_inputs:(x,y,z)position输入: tensor
         view_inputs: view输入:tensor
         mlp_network_fn: 网络model
-        netchunkNum: 并行处理的输入数量
+        netchunkNum: 并行处理的输入数量:1024*64
     output:[rgb, density]
 
 """

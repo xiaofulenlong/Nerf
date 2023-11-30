@@ -41,6 +41,7 @@ class BlenderDataSet(data.Dataset):
         image_single = Image.open(img_single_dir,mode = 'r')
         if self.transform != None:
             image_single =self.transform(image_single)
+
         return image_single
 
 
@@ -83,16 +84,17 @@ class BlenderDataSet(data.Dataset):
         all_images = [] #全部的图片信息
         for img_dir in self.img_dirs:
             img_loc = os.path.join(self.json_dir,img_dir+ '.png')
-            img = Image.open(img_loc).convert("RGBA")
+            img = Image.open(img_loc).convert("RGB")
             all_images.append(self.transform(img))
-
+        all_images_tensor = torch.stack(all_images, dim=0) #[n, channals, H, W,]
+        all_images_tensor = np.transpose(all_images_tensor,[0,2,3,1]) #[n,  H, W,channals]
         #相机视角姿势
         view = torch.from_numpy(self.view_pos)[:,:3,:]
 
         #相机旋转角（？）
         rotation = self.rotation
 
-        return  focal,all_images, view.float(),img_h, img_w,rotation
+        return  focal,all_images_tensor, view.float(),img_h, img_w,rotation
 
 
 #裁切，预处理图像

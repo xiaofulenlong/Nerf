@@ -5,6 +5,7 @@
 import torch 
 from rendering.intergrateToAll import intregrateTo_RGB_density
 from rendering.rays import get_rays
+
 """
 输入: 
     render_chunk : 一次并行处理的光线的数量
@@ -40,9 +41,12 @@ def render(img_H,img_W,K,c2w,render_chunk,
     # 视图方向聚合到光线中
     rays = torch.cat([rays_o, rays_d, near, far,rays_d_normalized], -1) #拼接：变成[W*H,3+3+1+1+3]维度
     
-    # 开始并行计算光线属性,返回值：rgb_map:[number_of_rays, 3]
-    all_color_density = render_rays(rays,render_chunk,**nerf_trained_args)
+    # 开始批量并行计算光线属性,返回值：rgb_map:[number_of_rays, 3]
+    for i in range():
+        
+        color_density = render_rays(rays ,**nerf_trained_args)
 
+    all_color_density = 
     return all_color_density
 
 
@@ -59,8 +63,8 @@ Args:
       rgb: 光线的RGB [ray_nums,3]
       density:光线的密度 [ray_nums,1]
 """
-def render_rays(rays,render_chunk,coarse_num,mlp_query_fn,mlp_network_fn):
-    
+def render_rays(rays, coarse_num,mlp_query_fn,mlp_network_fn):
+
     # 从 ray 中分离出 rays_o, rays_d, viewdirs, near, far
     number_of_rays = rays.shape[0]
     rays_o, rays_d,  rays_view = rays[:, 0:3], rays[:, 3:6],rays[:,-3:] #维度[number_of_rays,3]
