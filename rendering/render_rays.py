@@ -5,6 +5,7 @@
 import torch 
 from rendering.intergrateToAll import intregrateTo_RGB_density
 from rendering.rays import get_rays
+import numpy as np 
 
 """
 输入: 
@@ -42,20 +43,24 @@ def render(img_H,img_W,K,c2w,render_chunk,
     rays = torch.cat([rays_o, rays_d, near, far,rays_d_normalized], -1) #拼接：变成[W*H,3+3+1+1+3]维度
     
     # 开始批量并行计算光线属性,返回值：rgb_map:[number_of_rays, 3]
-    for i in range():
-        
-        color_density = render_rays(rays ,**nerf_trained_args)
+    all_cd = {}
+    for i in range(0, rays.shape[0],render_chunk):
+        rays_chunk = rays[i:i+render_chunk]
+        color_density = render_rays(rays_chunk,**nerf_trained_args)
+        for cd in color_density:
+            if cd not in all_cd:
+                all_cd[cd] = []
+            all_cd[cd].append(color_density[cd])
+    all_color_density = {cd: torch.cat(all_cd[cd],0) for cd in all_cd  }
 
-    all_color_density = 
+    
+    
     return all_color_density
-
-
-
 
 
 """
 Args:
-      ray:生成处理好的光线
+      rays:挑选好的光线
       mlp_network: 训练网络
       coarse_num:粗采样点 
       

@@ -91,7 +91,7 @@ def main(args):
           rays_with_RGB = rays_with_RGB[rand]
           i_batch = 0
       
-      #render
+      #render:[ro+rd, N_rand, 3]
       rgb_map = render(train_img_h,train_img_w,K,train_view_pos,render_chunk,  rays_selected_to_train, **nerf_trained_args)
 
       #loss function 
