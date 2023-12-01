@@ -63,7 +63,10 @@ def main(args):
     get_rays: 列表推导式,for 每一个pos,使用get_rays获取相应的射线。
     堆叠起来output: rays:(num_of_poses, 2, H, W, 3)，其中 2 表示每个射线由原点和方向两个部分组成, 3 表示射线方向的三个分量x,y,z。
     """
-    rays = np.stack([get_rays(train_img_h,train_img_w,pos,K) for pos in train_view_pos[:,:3,4]],0) 
+    # from IPython import embed
+    # embed()
+    # exit()
+    rays = np.stack([get_rays(train_img_h,train_img_w,pos,K) for pos in train_view_pos[:,:3,3]],0) 
     #将光线的原点、方向、以及这条光线对应的像素颜色结合到一起，便于后面的 shuffle 操作
     rays_with_RGB =  np.concatenate([rays, train_img[:, None]], 1)  # [num_of_poses, ro+rd+rgb, H, W, 3] 
     rays_with_RGB = np.transpose(rays_with_RGB, [0,2,3,1,4])  # [num_of_poses, H, W, ro+rd+rgb, 3]
@@ -116,8 +119,8 @@ def main(args):
 
 
 
-# if __name__ == "__main__":
-# #创建解析器，读取命令行参数
-#     parser = get_parser()
-#     args = parser.parse_args()
-#     main(args)
+if __name__ == "__main__":
+#创建解析器，读取命令行参数
+    parser = get_parser()
+    args = parser.parse_args()
+    main(args)

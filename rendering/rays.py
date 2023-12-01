@@ -39,6 +39,10 @@ def get_rays(img_H,img_W,c2w:torch.Tensor,K) :
     然后抽出c2w的旋转矩阵,左乘得到世界坐标,然后在最后一个轴上进行求和，即沿着最后一个轴将 3 个方向分量相加。
     得到: rays_d为(H,W,3) rays_o为(H,W,3)
     """
+    # from IPython import embed
+    # embed()
+    # exit()
+
     rays_d = np.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1) 
     rays_o = c2w[:3,-1].expand(rays_d) #扩展后的维度为：(H,W,3) 
 

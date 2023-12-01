@@ -33,7 +33,7 @@ class Nerf(nn.Module):
         self.lineal_position_skip_input = nn.Linear(self.input_position_dim + hidden_unit_num,hidden_unit_num)
        
         self.lineal_hidden = nn.ModuleList( #将输入层加入隐藏层的输入
-            [self.lineal_position_input + nn.Linear(hidden_unit_num, hidden_unit_num) if i!=self.skip else  self.lineal_position_skip_input for i in range(network_depth-1)])
+            [self.lineal_position_input] + [nn.Linear(hidden_unit_num, hidden_unit_num) if i!=self.skip else  self.lineal_position_skip_input for i in range(network_depth-1)])
         self.lineal_features  = nn.Linear(hidden_unit_num,output_features_dim) #输出256特征 
         self.lineal_view_input = nn.Linear(self.input_view_dim + output_features_dim,output_dim) #输出的256特征+拼接的view维度，输出128维
         self.lineal_colorRGB = nn.Linear(output_dim,3)
