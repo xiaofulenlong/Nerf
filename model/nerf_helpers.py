@@ -19,6 +19,9 @@ def Positional_encoding(x:torch.Tensor,frequency_L:int) -> torch.Tensor:
        
     return encoded
 
+
+def loss_fn():
+    
 # if __name__ == "__main__":
 #     t = torch.rand([3,4,5])
 #     test = Positional_encoding(t,10)
