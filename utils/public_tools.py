@@ -18,6 +18,8 @@ def get_parser():
     parser.add_argument('--netchunkNum',type=int,default=1024*64,help="number of sent through network in parallel")
 
     #render options
+    parser.add_argument("--coarse_num", type=int, default=32*32*4, 
+                        help='coarse number')
     parser.add_argument('--if_use_batchs',action='store_true', 
                         help='whether only take random rays from 1 image at a time or n images')
     parser.add_argument("--render_chunk", type=int, default=1024*32, 
@@ -28,4 +30,6 @@ def get_parser():
     #train options
     parser.add_argument("--lrate_decay", type=int, default=250, 
                         help='exponential learning rate decay (in 1000 steps)')
+    parser.add_argument("--lrate", type=float, default=5e-4, 
+                        help='learning rate')
     return parser

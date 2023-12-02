@@ -24,7 +24,7 @@ class Nerf(nn.Module):
         self.nnetwork_depth = network_depth
         self.hidden_unit_num = hidden_unit_num
         self.output_features_dim = output_features_dim 
-        self.skip = 4 #跳跃连接发生的层数 【由论文的连接层示意图得出，不知道对不对】
+        self.skip = 4 #跳跃连接发生的层数
         self.input_position_dim = 2 * 3 * fre_position_L
         self.input_view_dim = 2 * 3 * fre_view_L
 
@@ -45,17 +45,18 @@ class Nerf(nn.Module):
 
     """
         Input:
-                Position: 3D (x,y,z)
-                viewing_direction
+                Position: 3D坐标(x,y,z)，最终采样生成的位置坐标: [n_sample,3] tensor
+                view_dir: 相机位姿tensor[n_img, 3, 4] tensor
         Output: 
                 RGB: emitted_color (r,g,b) 
                 density: volume_density 
     """
-    def forward(self, Position:torch.Tensor, viewing_direction: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, Position:torch.Tensor, view_dir: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         
+
         #高维映射
         encoded_position = Positional_encoding( Position , self.fre_position_L)
-        encoded_view_direction = Positional_encoding( viewing_direction,self.fre_view_L)
+        encoded_view_direction = Positional_encoding( view_dir,self.fre_view_L)
         
         #开始输送数据并激活
         input_data = encoded_position
@@ -75,9 +76,11 @@ class Nerf(nn.Module):
         input_data = nn.relu(input_data)
         rgb = self.lineal_colorRGB(input_data)
         
-        outputs = torch.cat([rgb, density], -1)
-    
-        return outputs    
+        # #render:将生成的rgb渲染起来
+        # ？？？？？问题：
+        #这次生成的是挑选的一批的光线的rgb,但是想要合成像素点上的颜色，还需要知道这批光线中每条光线的粗采样的采样距离z_vals
+        #这如何能在forward里生成，所以还是得写出去
+        return      
     
 
     def _init_weights(self,m):

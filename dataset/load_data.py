@@ -12,41 +12,46 @@ from torch import nn
 from torch.utils import data
 from torchvision import transforms
 from torchvision.transforms import functional as F, InterpolationMode
+from nerf_pro.dataset.get_rays import getRaysFromImg
 
 class BlenderDataSet(data.Dataset):
     """
     input: 
         json_dir:根目录地址
         dataset_label_type:取值范围[train,test,val]
-        transform:变换函数
+        transform:变换函数,生成光线
     output:
         focal:焦距
-        img_dataset:全部的Image信息【已经经过transform变换】:tensor
-        view_pos:相机姿势:tensor
+        view_pos:相机位姿:tensor
         img_H:图像的高 
         img_w:图像的宽
         rotation:相机旋转角(?目前不知道有什么用)
     """
-    def __init__(self,json_dir,dataset_label_type,transform=None):
+    def __init__(self,json_dir,dataset_label_type,transform):
         self.json_dir = json_dir
         self.dataset_label_type = dataset_label_type
         self.transform = transform
         self._input_json_data() #读取全部的json文件的内容
-        #获得参数：焦距，全部的Image信息，相机姿势，图像的高、宽，相机旋转角
-        self.focal,self.img_dataset,self.view_pos,self.img_H,self.img_w,self.rotation= self._get_getblenderDataParam() #获取要用的参数
+        #获得参数：焦距，相机位姿，图像的高、宽，相机旋转角
+        self.focal, self.view_pos,self.img_H,self.img_w,self.rotation= self._get_getblenderDataParam() #获取要用的参数
 
     def __getitem__(self,index):
-        #读取json中每一个frame的地址图片
+        #获取一张图片的总光线和RGB
         img_single_dir = os.path.join(self.json_dir,self.img_dirs[index]+ '.png')
-        image_single = Image.open(img_single_dir,mode = 'r')
-        if self.transform != None:
-            image_single =self.transform(image_single)
+        image = Image.open(img_single_dir,mode = 'r').convert("RGB")
+        
+        #dataset:rays, tensor:[H*W,6]
+        rays = getRaysFromImg(self.img_H,self.img_w, self.view_pos[index])
 
-        return image_single
+        #label:image的RGB,tensor:[H,W,3]
+        image = self.transform(image)
+        return rays,image
 
 
     def __len__(self):
-        return len(self.allimgs)    #具体返回什么长度之后再修改
+        #返回光线的总数目
+        nume_of_rays = self.img_H * self.img_w * self.view_pos.shape[0]
+        return nume_of_rays   
 
     def _input_json_data(self):
         #读取全部的json文件的内容
@@ -74,27 +79,21 @@ class BlenderDataSet(data.Dataset):
     def _get_getblenderDataParam(self):
         
         #高，宽
-        image_0 = self.__getitem__(0)
-        img_h, img_w = image_0.shape[1], image_0.shape[2]
+        img0_dir = self.img_dirs[0]
+        img0_loc = os.path.join(self.json_dir,img0_dir+ '.png')
+        img0 = Image.open(img0_loc)
+        img_h, img_w = img0.shape[1], img0.shape[2]
 
         #焦距
         focal = self._getCameraFocal(img_w)
 
-        #全部的图像信息
-        all_images = [] #全部的图片信息
-        for img_dir in self.img_dirs:
-            img_loc = os.path.join(self.json_dir,img_dir+ '.png')
-            img = Image.open(img_loc).convert("RGB")
-            all_images.append(self.transform(img))
-        all_images_tensor = torch.stack(all_images, dim=0) #[n, channals, H, W,]
-        all_images_tensor = np.transpose(all_images_tensor,[0,2,3,1]) #[n,  H, W,channals]
-        #相机视角姿势
-        view = torch.from_numpy(self.view_pos)[:,:3,:]
+        #相机视角姿势:tensor[num_of_img,3,4]
+        pos = torch.from_numpy(self.view_pos)[:,:3,:]
 
-        #相机旋转角（？）
+        #相机旋转角
         rotation = self.rotation
 
-        return  focal,all_images_tensor, view.float(),img_h, img_w,rotation
+        return  focal,pos.float(),img_h, img_w,rotation
 
 
 #裁切，预处理图像
