@@ -4,7 +4,6 @@
     （原理：有了这个单位方向就可以通过调整 Z 轴坐标生成空间中每一个点坐标，借此模拟一条光线。）
 """
 import torch
-import numpy as np
 """
 input: 
     img_H: 高
@@ -34,15 +33,15 @@ def getRaysFromImg(img_H,img_W,c2w:torch.Tensor,K) :
     """
     c2w矩阵的知识点见我的博客:nerf-01,下面讲讲详细变换过程
     c2w是 3x4 的矩阵，其中包含旋转矩阵和平移向量[x,y,z,o]
-    dirs[..., np.newaxis, :]:扩展dirs从维度(H,W,3)变为(H, W, 1, 3),扩展了最后一个轴
-    然后抽出c2w的旋转矩阵,左乘得到世界坐标,然后在最后一个轴上进行求和，即沿着最后一个轴将 3 个方向分量相加。
+    抽出c2w的旋转矩阵,左乘得到世界坐标,然后在最后一个轴上进行求和，即沿着最后一个轴将 3 个方向分量相加。
     得到: rays_d为(H,W,3) rays_o为(H,W,3)
     """
-    rays_d = np.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1) 
-    rays_o = c2w[:3,-1].expand(rays_d) #扩展后的维度为：(H,W,3) 
+    rays_d = torch.sum(dirs[..., None, :] * c2w[:3,:3],dim=-1) 
+    rays_o = c2w[:3, -1].view(1, 1, -1).expand_as(rays_d) #扩展后的维度为：(H,W,3) 
 
     rays_d = (torch.tensor(rays_d)).reshape(-1,3) #维度为(H*W,3)
     rays_o = rays_o.reshape(-1,3) #维度为(H*W,3)
+
     #组装，rays维度为(H*W,6),前3是对应的光心，后3是方向
     rays = torch.cat((rays_o,rays_d),dim=1)
     return rays 

@@ -10,8 +10,8 @@ from model.nerf_helpers import Positional_encoding
 class Nerf(nn.Module):
 
     def __init__(self,
-        fre_position_L, #对位置坐标的映射维度
-        fre_view_L, #对视角的映射维度
+        fre_position_L, #对位置坐标的映射维度 10
+        fre_view_L, #对视角的映射维度 4
         network_depth = 8,
         hidden_unit_num = 256,
         output_features_dim = 256, #输出的特征值的维度
@@ -25,19 +25,25 @@ class Nerf(nn.Module):
         self.hidden_unit_num = hidden_unit_num
         self.output_features_dim = output_features_dim 
         self.skip = 4 #跳跃连接发生的层数
-        self.input_position_dim = 2 * 3 * fre_position_L
-        self.input_view_dim = 2 * 3 * fre_view_L
+        self.input_position_dim = 2 * 3 * fre_position_L #60
+        self.input_view_dim = 2 * 3 * fre_view_L #24
 
         # mlp构建：lineal
-        self.lineal_position_input = nn.Linear( self.input_position_dim,hidden_unit_num)
+        self.lineal_position_input = nn.Linear( self.input_position_dim,hidden_unit_num) #[60,128]
         self.lineal_position_skip_input = nn.Linear(self.input_position_dim + hidden_unit_num,hidden_unit_num)
        
-        self.lineal_hidden = nn.ModuleList( #将输入层加入隐藏层的输入
-            [self.lineal_position_input + nn.Linear(hidden_unit_num, hidden_unit_num) if i!=self.skip else  self.lineal_position_skip_input for i in range(network_depth-1)])
+       
+        self.lineal_hidden = nn.ModuleList([
+            nn.Sequential(
+                self.lineal_position_input, #[60,128]
+                nn.Linear(hidden_unit_num, hidden_unit_num) #[128,128]
+            ) if i != self.skip else self.lineal_position_skip_input
+            for i in range(network_depth - 1)
+        ])
         self.lineal_features  = nn.Linear(hidden_unit_num,output_features_dim) #输出256特征 
         self.lineal_view_input = nn.Linear(self.input_view_dim + output_features_dim,output_dim) #输出的256特征+拼接的view维度，输出128维
-        self.lineal_colorRGB = nn.Linear(output_dim,3)
-        self.lineal_density = nn.Linear(hidden_unit_num,1)
+        self.lineal_colorRGB = nn.Linear(output_dim,3) #[128,3]
+        self.lineal_density = nn.Linear(hidden_unit_num,1) #[256,1]
 
         # 初始化权重
         self.apply(self._init_weights)
@@ -45,8 +51,8 @@ class Nerf(nn.Module):
 
     """
         Input:
-                Position: 3D坐标(x,y,z)，最终采样生成的位置坐标: [n_sample,3] tensor
-                view_dir: 相机位姿tensor[n_img, 3, 4] tensor
+                Position:  tensor  [batch_size*n_sampling, 3]=[N,3]
+                view_dir:  tensor [batch_size*n_rays_perImg, 3]=[M,3]
         Output: 
                 RGB: emitted_color (r,g,b) 
                 density: volume_density 
@@ -55,8 +61,10 @@ class Nerf(nn.Module):
         
 
         #高维映射
-        encoded_position = Positional_encoding( Position , self.fre_position_L)
-        encoded_view_direction = Positional_encoding( view_dir,self.fre_view_L)
+        encoded_position = Positional_encoding( Position , self.fre_position_L) #[N,60]
+        encoded_view_direction = Positional_encoding( view_dir,self.fre_view_L) #[M,24]
+        # encoded_position =  Position   
+        # encoded_view_direction =  view_dir
         
         #开始输送数据并激活
         input_data = encoded_position
@@ -76,10 +84,6 @@ class Nerf(nn.Module):
         input_data = nn.relu(input_data)
         rgb = self.lineal_colorRGB(input_data)
         
-        # #render:将生成的rgb渲染起来
-        # ？？？？？问题：
-        #这次生成的是挑选的一批的光线的rgb,但是想要合成像素点上的颜色，还需要知道这批光线中每条光线的粗采样的采样距离z_vals
-        #这如何能在forward里生成，所以还是得写出去
         return      
     
 
