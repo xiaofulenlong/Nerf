@@ -14,7 +14,7 @@ Input:
 
 Output:
 """
-def intregrateTo_RGB_density(raw,z_vals, rays_d):
+def render(raw,z_vals):
     #以下代码根据体渲染离散公式得出
     
     #分离raw中的RGBA

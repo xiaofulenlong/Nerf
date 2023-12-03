@@ -20,8 +20,13 @@ def Positional_encoding(x:torch.Tensor,frequency_L:int) -> torch.Tensor:
     return encoded
 
 
-def loss_fn():
-    
+def Generate_view(rays): 
+    view = rays[:, :,3:6]  #维度[batch_size,n_per_rays,3]
+    view = view / torch.norm(view, dim=-1, keepdim=True) #归一化
+    view = torch.reshape(view, [-1,3]).float() #维度[batch_size*n_per_rays,3]
+
+    return view 
+
 # if __name__ == "__main__":
 #     t = torch.rand([3,4,5])
 #     test = Positional_encoding(t,10)

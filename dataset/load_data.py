@@ -10,9 +10,8 @@ import torch
 from PIL import Image
 from torch import nn
 from torch.utils import data
-from torchvision import transforms
 from torchvision.transforms import functional as F, InterpolationMode
-from nerf_pro.dataset.get_rays import getRaysFromImg
+from dataset.get_Rays import getRaysFromImg
 
 class BlenderDataSet(data.Dataset):
     """
@@ -36,12 +35,21 @@ class BlenderDataSet(data.Dataset):
         self.focal, self.view_pos,self.img_H,self.img_w,self.rotation= self._get_getblenderDataParam() #获取要用的参数
 
     def __getitem__(self,index):
-        #获取一张图片的总光线和RGB
+        #获取一张图片的位姿，总光线和RGB
         img_single_dir = os.path.join(self.json_dir,self.img_dirs[index]+ '.png')
         image = Image.open(img_single_dir,mode = 'r').convert("RGB")
         
+        #pos,tensor:[3,4]
+        pos = self.view_pos[index]
+        #相机内参：
+        K = np.array([
+            [self.focal, 0, 0.5*self.img_w],
+            [0, self.focal, 0.5*self.img_H],
+            [0, 0, 1]
+        ])
         #dataset:rays, tensor:[H*W,6]
-        rays = getRaysFromImg(self.img_H,self.img_w, self.view_pos[index])
+        rays = getRaysFromImg(self.img_H,self.img_w,pos,K)
+        
 
         #label:image的RGB,tensor:[H,W,3]
         image = self.transform(image)
@@ -49,8 +57,8 @@ class BlenderDataSet(data.Dataset):
 
 
     def __len__(self):
-        #返回光线的总数目
-        nume_of_rays = self.img_H * self.img_w * self.view_pos.shape[0]
+        #返回图像的总数目
+        nume_of_rays =  self.view_pos.shape[0]
         return nume_of_rays   
 
     def _input_json_data(self):
@@ -81,7 +89,8 @@ class BlenderDataSet(data.Dataset):
         #高，宽
         img0_dir = self.img_dirs[0]
         img0_loc = os.path.join(self.json_dir,img0_dir+ '.png')
-        img0 = Image.open(img0_loc)
+        img0 = Image.open(img0_loc,mode = 'r').convert("RGB")
+        img0 = self.transform(img0)
         img_h, img_w = img0.shape[1], img0.shape[2]
 
         #焦距
@@ -121,12 +130,11 @@ class ResizeImg(nn.Module):
 
 # #test 
 # if __name__ == "__main__":
-#    img_scale = 0.5
-#    transform_function = transforms.Compose([
-#         ResizeImg(img_scale),
-#         transforms.ToTensor(),
-#     ])
-#    test = BlenderDataSet("/home/hrr/my_code/nerf_pro/nerf_synthetic/lego/","train",transform_function)
-#    print(   test[0 ])
+#     transform_function = transforms.Compose([
+#         ResizeImg(0.5),
+#         transforms.ToTensor()
+#         ]) 
+#     test = BlenderDataSet("/home/hrr/my_code/nerf_pro/nerf_synthetic/lego/","train",transform_function)
+#     print(   test[0 ])
  
    

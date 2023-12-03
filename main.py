@@ -2,13 +2,14 @@
 from torchvision import transforms
 from utils.public_tools import get_parser
 from dataset.load_data import BlenderDataSet,ResizeImg
-import numpy as np  
 import torch
 from torch.utils.data import DataLoader,RandomSampler
-from tqdm import tqdm, trange
+from tqdm import trange
 from model.nerf_model import Nerf
-from model.nerf_helpers import loss_fn
 from model.nerf_sample import Coarse_sampling
+from rendering.intergrateToAll import render
+from model.nerf_helpers import Generate_view
+from tensorboardX import SummaryWriter
 
 def main(args):
 
@@ -37,36 +38,38 @@ def main(args):
     train_dataset = BlenderDataSet(dataset_dir,'train',transform_function)
     #test_dataset =  BlenderDataSet(dataset_dir,'test',transform_function)
     #dataloader
-    train_dataloader = DataLoader(train_dataset,batch_size=1024*32, shuffle=True,sampler=RandomSampler(train_dataset))
+    train_dataloader = DataLoader(train_dataset,batch_size=1, sampler=RandomSampler(train_dataset))
 
-    #整理训练集的参数
-    train_focal = train_dataset.focal #焦距：555.5555155968841
-    train_pos = train_dataset.view_pos #相机位姿:tensor[100, 3, 4]
-    train_img_h = train_dataset.img_H #400
-    train_img_w = train_dataset.img_w #400
-    #相机内参：
-    K = np.array([
-            [train_focal, 0, 0.5*train_img_w],
-            [0, train_focal, 0.5*train_img_h],
-            [0, 0, 1]
-        ])
- 
+    # #整理训练集的参数
+    # train_focal = train_dataset.focal #焦距：555.5555155968841
+    # train_pos = train_dataset.view_pos #相机位姿:tensor[100, 3, 4]
+    # train_img_h = train_dataset.img_H #400
+    # train_img_w = train_dataset.img_w #400
+
     #调用nerf，初始化模型 
     mlp_model = Nerf(fre_position_L,fre_view_L,network_depth,hidden_unit_num,output_features_dim,output_dim)
-    #梯度与优化器
+    #loss,梯度与优化器
+    loss_func = torch.nn.MSELoss()
     grad_vars = list(mlp_model.parameters())
     optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
- 
+    #摘要写入器
+    summary_writer = SummaryWriter('./_log/img')
     # ========= train !!!! =============
     #采样
 
-    epoch_num = 200000
+    epoch_num = 20
     for i in trange(0,epoch_num):
-      for rays,label in train_dataloader:
-        pts =  Coarse_sampling(rays,coarse_num)  #pts: [n_sampling, 3]
-        output = mlp_model(pts,train_pos)  
+      for rays,label in train_dataloader: 
+        #rays:tensor([batch_size, n_rays_perImg, 6]). label:tensor([batch_size, 3, H, W])
+       
+        pts,z_vals=  Coarse_sampling(rays,coarse_num)  #pts: [batch_size*n_sampling, 3] ,z_vals:采样间隔[batch_size,coarse_num]
+        view = Generate_view(rays) #view:[batch_size*n_rays_perImg,3]
+
+        output_RGBD = mlp_model(pts,view)  #output_RGBD:[batch_size,n_rays_perImg,4]
+
+        output = render(z_vals,output_RGBD) #output:tensor[batch_size,3,H,W]
         #optimizer
-        loss = loss_fn(output,label)
+        loss = loss_func(output,label) #label:tensor([batch_size, 3, H, W])
         # psnr =  -10. * torch.log(loss) / torch.log(torch.Tensor([10.]))
         optimizer.zero_grad()
         loss.backward()  # 损失反向传播
@@ -78,8 +81,10 @@ def main(args):
         new_lrate = lrate * (decay_rate ** (i / decay_steps))
         for param in optimizer.param_groups:
           param['lr'] = new_lrate
-    
-
+        #摘要写入器
+        for batch in range(output.shape[0]):
+          #第二个参数要求：[C,H,W]
+          summary_writer.add_image('image', output[batch], global_step=i)
 
 
  
