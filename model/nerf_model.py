@@ -29,19 +29,17 @@ class Nerf(nn.Module):
         self.input_view_dim = 2 * 3 * fre_view_L #24
 
         # mlp构建：lineal
-        self.lineal_position_input = nn.Linear( self.input_position_dim,hidden_unit_num) #[60,128]
-        self.lineal_position_skip_input = nn.Linear(self.input_position_dim + hidden_unit_num,hidden_unit_num)
+        self.lineal_position_input = nn.Linear( self.input_position_dim,hidden_unit_num) #[60,256]
+        self.lineal_position_skip_input = nn.Linear(self.input_position_dim + hidden_unit_num,hidden_unit_num) #[316,256]
        
        
         self.lineal_hidden = nn.ModuleList([
-            nn.Sequential(
-                self.lineal_position_input, #[60,128]
-                nn.Linear(hidden_unit_num, hidden_unit_num) #[128,128]
-            ) if i != self.skip else self.lineal_position_skip_input
+            nn.Linear(hidden_unit_num, hidden_unit_num) #[256,256]
+            if i != self.skip else self.lineal_position_skip_input
             for i in range(network_depth - 1)
         ])
-        self.lineal_features  = nn.Linear(hidden_unit_num,output_features_dim) #输出256特征 
-        self.lineal_view_input = nn.Linear(self.input_view_dim + output_features_dim,output_dim) #输出的256特征+拼接的view维度，输出128维
+        self.lineal_features  = nn.Linear(hidden_unit_num,output_features_dim) #输出256特征  [128,256]
+        self.lineal_view_input = nn.Linear(self.input_view_dim + output_features_dim,output_dim) #输出的256特征+拼接的view维度，输出128维 [280,128]
         self.lineal_colorRGB = nn.Linear(output_dim,3) #[128,3]
         self.lineal_density = nn.Linear(hidden_unit_num,1) #[256,1]
 
@@ -67,7 +65,7 @@ class Nerf(nn.Module):
         # encoded_view_direction =  view_dir
         
         #开始输送数据并激活
-        input_data = encoded_position
+        input_data = encoded_position #[N,60]
         for i,lineal_item in enumerate(self.lineal_hidden):
             input_data = self.lineal_hidden[i](input_data) #传入数据
             input_data = nn.relu(input_data) 
@@ -84,7 +82,10 @@ class Nerf(nn.Module):
         input_data = nn.relu(input_data)
         rgb = self.lineal_colorRGB(input_data)
         
-        return      
+        #
+        ret = torch.cat([rgb,density],dim=-1)
+
+        return   ret     
     
 
     def _init_weights(self,m):

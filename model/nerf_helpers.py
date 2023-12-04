@@ -7,6 +7,7 @@ import math
 import numpy as np
 
 # 高维映射编码
+#将[N,3]的tensor映射为[N,3*2*frequency_L]的tensor
 def Positional_encoding(x:torch.Tensor,frequency_L:int) -> torch.Tensor:
     encoded= []
     cal = []
