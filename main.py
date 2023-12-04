@@ -33,7 +33,9 @@ def main(args):
     transform_function = transforms.Compose([
         ResizeImg(img_scale),
         transforms.ToTensor()
-        ])  
+        ]) 
+    # print(torch.cuda.is_available()) # true 查看GPU是否可用
+    # print(torch.cuda.device_count()) #GPU数量
     #加载处理训练集和数据集
     train_dataset = BlenderDataSet(dataset_dir,'train',transform_function)
     #test_dataset =  BlenderDataSet(dataset_dir,'test',transform_function)
@@ -43,11 +45,11 @@ def main(args):
     # #整理训练集的参数
     # train_focal = train_dataset.focal #焦距：555.5555155968841
     # train_pos = train_dataset.view_pos #相机位姿:tensor[100, 3, 4]
-    # train_img_h = train_dataset.img_H #400
-    # train_img_w = train_dataset.img_w #400
+    train_img_h = train_dataset.img_H  
+    train_img_w = train_dataset.img_w  
 
     #调用nerf，初始化模型 
-    mlp_model = Nerf(fre_position_L,fre_view_L,network_depth,hidden_unit_num,output_features_dim,output_dim)
+    mlp_model = Nerf(fre_position_L,fre_view_L,network_depth,hidden_unit_num,output_features_dim,output_dim) 
     #loss,梯度与优化器
     loss_func = torch.nn.MSELoss()
     grad_vars = list(mlp_model.parameters())
@@ -65,9 +67,9 @@ def main(args):
         pts,z_vals=  Coarse_sampling(rays,coarse_num)  #pts: [batch_size*n_sampling, 3] ,z_vals:采样间隔[batch_size,coarse_num]
         view = Generate_view(rays) #view:[batch_size*n_rays_perImg,3]
 
-        output_RGBD = mlp_model(pts,view)  #output_RGBD:[batch_size,n_rays_perImg,4]
+        output_RGBD = mlp_model(pts,view)  #output_RGBD:[batch_size*n_sampling ,4]
 
-        output = render(z_vals,output_RGBD) #output:tensor[batch_size,3,H,W]
+        output = render(z_vals,output_RGBD,train_img_h,train_img_w) #output:tensor[batch_size,3,H,W]
         #optimizer
         loss = loss_func(output,label) #label:tensor([batch_size, 3, H, W])
         # psnr =  -10. * torch.log(loss) / torch.log(torch.Tensor([10.]))
