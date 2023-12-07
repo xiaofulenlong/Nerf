@@ -37,7 +37,7 @@ class BlenderDataSet(data.Dataset):
     def __getitem__(self,index):
         #获取一张图片的位姿，总光线和RGB
         img_single_dir = os.path.join(self.json_dir,self.img_dirs[index]+ '.png')
-        image = Image.open(img_single_dir,mode = 'r').convert("RGB")
+        img = Image.open(img_single_dir,mode = 'r').convert("RGB")
         
         #pos,tensor:[3,4]
         pos = self.view_pos[index]
@@ -52,8 +52,10 @@ class BlenderDataSet(data.Dataset):
         
 
         #label:image的RGB,tensor:[H,W,3]
-        image = self.transform(image)
-        return rays,image
+        img = self.transform(img)
+        img = torch.reshape(img,(-1,3))
+
+        return rays,img
 
 
     def __len__(self):

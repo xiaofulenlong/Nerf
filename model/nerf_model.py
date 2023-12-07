@@ -5,7 +5,9 @@
 from torch import nn
 import torch
 from typing import Optional,Tuple
+import torch.nn.functional as F
 from model.nerf_helpers import Positional_encoding
+
 
 class Nerf(nn.Module):
 
@@ -66,20 +68,25 @@ class Nerf(nn.Module):
         
         #开始输送数据并激活
         input_data = encoded_position #[N,60]
+        #输入层
+        input_data = self.lineal_position_input(input_data)
+        input_data = F.relu(input_data) 
+        #隐藏层
         for i,lineal_item in enumerate(self.lineal_hidden):
-            input_data = self.lineal_hidden[i](input_data) #传入数据
-            input_data = nn.relu(input_data) 
-            if i == self.skips:
+            if i == self.skip:
                 input_data = torch.cat([encoded_position, input_data], -1) #跳跃连接：拼接一下输入的数据
+            input_data = lineal_item(input_data) #传入数据
+            input_data = F.relu(input_data) 
+            
        
-        #输出density: volume_density 
+        #输出density: volume_density [N,1]
         density = self.lineal_density(input_data)
        
-        #RGB: emitted_color (r,g,b) 
-        feature = self.self.lineal_features(input_data) #256维
+        #RGB: emitted_color (r,g,b) [N,3]
+        feature = self.lineal_features(input_data) #[N,256]
         input_data = torch.cat([feature, encoded_view_direction], -1) 
         input_data = self.lineal_view_input(input_data)
-        input_data = nn.relu(input_data)
+        input_data = F.relu(input_data)
         rgb = self.lineal_colorRGB(input_data)
         
         #
