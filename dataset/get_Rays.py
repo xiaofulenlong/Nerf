@@ -16,7 +16,6 @@ output:
 
 """
 def getRaysFromImg(img_H,img_W,c2w:torch.Tensor,K) :
-   
     #​step1 ：写出相机中心、像素点在相机坐标系下的坐标
     #生成网格 i:横,j:列
     i, j = torch.meshgrid(torch.linspace(0,img_W-1,img_W),torch.linspace(0,img_H-1,img_H))

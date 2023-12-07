@@ -18,14 +18,13 @@ def get_parser():
     parser.add_argument('--netchunkNum',type=int,default=1024*64,help="number of sent through network in parallel")
 
     #render options
-    parser.add_argument("--coarse_num", type=int, default=32*32*4, 
+    parser.add_argument("--coarse_num", type=int, default=1024, 
                         help='coarse number')
     parser.add_argument('--if_use_batchs',action='store_true', 
                         help='whether only take random rays from 1 image at a time or n images')
-    parser.add_argument("--render_chunk", type=int, default=1024*32, 
+    parser.add_argument("--render_chunk", type=int, default=1000, 
                         help='number of rays processed in parallel')
-    parser.add_argument("--N_rand", type=int, default=32*32*4, 
-                        help='batch size (number of random rays per gradient step)')    
+    
 
     #train options
     parser.add_argument("--lrate_decay", type=int, default=250, 

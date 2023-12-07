@@ -21,12 +21,16 @@ def Positional_encoding(x:torch.Tensor,frequency_L:int) -> torch.Tensor:
     return encoded
 
 
-def Generate_view(rays): 
-    view = rays[:, :,3:6]  #维度[batch_size,n_per_rays,3]
+def Generate_view(rays,coarse): 
+    view = rays[:, :,3:6]  #维度[batch_size,chunk,3]
     view = view / torch.norm(view, dim=-1, keepdim=True) #归一化
-    view = torch.reshape(view, [-1,3]).float() #维度[batch_size*n_per_rays,3]
+    view = torch.reshape(view, [-1,3]).float() #维度[batch_size*chunk,3]
 
-    return view 
+    result = view.repeat(coarse, 1)
+    # 调整形状为 [10*n, 3]
+    result = result.view(-1, result.shape[1])
+
+    return result 
 
 # if __name__ == "__main__":
 #     t = torch.rand([3,4,5])
